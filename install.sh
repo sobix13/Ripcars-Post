@@ -31,9 +31,8 @@ def secret(prompt):
 
 token = secret('Discord bot token (hidden): ')
 api_key = secret('TwitterAPI.io API key (hidden): ')
-with open('/dev/tty', 'r+') as terminal:
-    terminal.write('Discord server ID: ')
-    terminal.flush()
+print('Discord server ID: ', end='', flush=True)
+with open('/dev/tty', 'r') as terminal:
     guild = terminal.readline().strip()
 if not guild.isdigit():
     raise SystemExit('Enter the numeric Discord server ID. Run the installer again.')
