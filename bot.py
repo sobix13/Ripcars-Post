@@ -18,7 +18,7 @@ log = logging.getLogger("ripcars-post")
 
 def permissions(channel, roles):
     perms = channel.permissions_for(channel.guild.me)
-    needed = ("view_channel", "send_messages", "read_message_history")
+    needed = ("view_channel", "send_messages", "read_message_history", "embed_links")
     missing = [name for name in needed if not getattr(perms, name)]
     if missing:
         raise ValueError("Missing channel permissions: " + ", ".join(missing))
@@ -49,7 +49,7 @@ async def deliver(store, row, channel, bot_id):
                 boundary = str(previous.id)
             store.progress(row, index, boundary)
             allowed = json.loads(row["roles"]) if index == len(parts) - 1 else []
-            await channel.send(parts[index], suppress_embeds=True, allowed_mentions=discord.AllowedMentions(
+            await channel.send(parts[index], allowed_mentions=discord.AllowedMentions(
                 everyone=False, users=False, roles=[discord.Object(id=r) for r in allowed],
                 replied_user=False))
         store.progress(row, index + 1)

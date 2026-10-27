@@ -107,6 +107,26 @@ class TextTests(unittest.TestCase):
         self.assertEqual(tweet_time({"createdAt": "2026-01-01T03:30:00+03:30"}),
                          tweet_time({"createdAt": "2026-01-01T00:00:00Z"}))
 
+    def test_only_canonical_post_link_is_left_embeddable(self):
+        post = tweet(text="Read https://example.com and https://t.co/site https://t.co/video",
+                     extendedEntities={"media": [{"url": "https://t.co/video", "type": "video"}]})
+        text = "".join(message_parts(post, DEFAULT))
+        self.assertIn("Read <https://example.com> and <https://t.co/site>", text)
+        self.assertNotIn("https://t.co/video", text)
+        self.assertIn("\nhttps://x.com/ripcarsio/status/100", text)
+
+    def test_own_media_entity_removed_but_quoted_post_link_preserved(self):
+        post = tweet(text="Update https://t.co/own https://t.co/quote", entities={"urls": [
+            {"url": "https://t.co/own", "expanded_url": "https://twitter.com/ripcarsio/status/100/video/1"},
+            {"url": "https://t.co/quote", "expanded_url": "https://x.com/other/status/200/video/1"}]})
+        text = "".join(message_parts(post, DEFAULT))
+        self.assertNotIn("https://t.co/own", text)
+        self.assertIn("<https://t.co/quote>", text)
+
+    def test_media_only_post_still_has_original_link(self):
+        post = tweet(text="https://t.co/photo", extendedEntities={"media": [{"url": "https://t.co/photo"}]})
+        self.assertEqual(message_parts(post, DEFAULT), ["\n\nRead the original post on X:\nhttps://x.com/ripcarsio/status/100"])
+
 
 class AsyncTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
@@ -169,6 +189,7 @@ class AsyncTests(unittest.IsolatedAsyncioTestCase):
         channel = SimpleNamespace(send=AsyncMock(), history=history)
         await deliver(self.store, self.store.pending(1)[0], channel, 99)
         calls = channel.send.call_args_list
+        self.assertTrue(all(not call.kwargs.get("suppress_embeds", False) for call in calls))
         for call in calls[:-1]:
             self.assertEqual(call.kwargs["allowed_mentions"].to_dict()["parse"], [])
         last = calls[-1].kwargs["allowed_mentions"].to_dict()
@@ -237,7 +258,7 @@ class AsyncTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_permission_validation_rejects_everyone(self):
         channel = SimpleNamespace(guild=SimpleNamespace(me=None), permissions_for=lambda _: SimpleNamespace(
-            view_channel=True, send_messages=True, read_message_history=True, mention_everyone=True))
+            view_channel=True, send_messages=True, read_message_history=True, embed_links=True, mention_everyone=True))
         with self.assertRaisesRegex(ValueError, "@everyone"):
             permissions(channel, [SimpleNamespace(is_default=lambda: True)])
 
