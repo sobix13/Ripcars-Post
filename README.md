@@ -18,8 +18,8 @@ official X developer API. No X login, cookies, or X developer account is needed.
 3. In Bot, obtain the bot token using Reset Token when required.
 4. Keep all Privileged Gateway Intents off. This bot does not need them.
 5. In OAuth2 / URL Generator, select `bot` and `applications.commands`.
-6. Select View Channels, Send Messages, and Read Message History. Invite it to
-   your server using the generated URL. The equivalent permission integer is 68608.
+6. Select View Channels, Send Messages, Read Message History, and Embed Links. Invite it to
+   your server using the generated URL. The equivalent permission integer is 84992.
 7. Enable Developer Mode in your Discord client settings, then copy your server ID.
 
 Discord's application setup is separate from X. The only X data credential is
@@ -81,6 +81,7 @@ Use `/status` to see the next check, last successful checkpoint, and last error.
   longest available full-text field is used without AI rewriting or summarizing.
 - Posts exceeding Discord's 2,000-unit message limit are split without dropping
   characters. The original-post link and role pings appear on the final message.
+- Media attachment short links are removed from the copied text. Other body links stay clickable with previews disabled. The canonical original-post link remains eligible for Discord's preview, which depends on X/Discord availability.
 - This release copies text and the original link. It does not download images or
   videos, or expand X Articles into their article body.
 - The poll uses timestamp-bounded search, not repeated downloads of the latest
@@ -134,3 +135,4 @@ python3 -m unittest -v
 
 Tests use fake API and Discord responses. Live X/Discord delivery and the systemd
 installation require your VPS and credentials and have not been run here.
+

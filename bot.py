@@ -18,7 +18,7 @@ log = logging.getLogger("ripcars-post")
 
 def permissions(channel, roles):
     perms = channel.permissions_for(channel.guild.me)
-    needed = ("view_channel", "send_messages", "read_message_history")
+    needed = ("view_channel", "send_messages", "read_message_history", "embed_links")
     missing = [name for name in needed if not getattr(perms, name)]
     if missing:
         raise ValueError("Missing channel permissions: " + ", ".join(missing))

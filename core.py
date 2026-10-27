@@ -68,6 +68,25 @@ def message_parts(tweet, config):
     text = full_text(tweet)
     if not text:
         raise ValueError("The provider returned no post text.")
+    media_urls = set()
+    for key in ("extendedEntities", "extended_entities", "entities"):
+        for media in (tweet.get(key) or {}).get("media", []):
+            if media.get("url"):
+                media_urls.add(media["url"])
+    own_media = re.compile(
+        rf"https?://(?:www\.)?(?:x|twitter)\.com/[^/]+/status/{re.escape(str(tweet['id']))}/(?:photo|video)/\d+(?:\?.*)?$")
+    for entity in (tweet.get("entities") or {}).get("urls", []):
+        if own_media.fullmatch(entity.get("expanded_url") or "") and entity.get("url"):
+            media_urls.add(entity["url"])
+
+    def format_url(match):
+        space, url = match.groups()
+        if url in media_urls:
+            return ""
+        # Disable previews for body links; the canonical footer link stays bare.
+        return space + "<" + url + ">"
+
+    text = re.sub(r"([ \t]*)(https?://[^\s<>]+)", format_url, text)
     link = f"https://x.com/{config['username']}/status/{tweet['id']}"
     mentions = " ".join(f"<@&{r}>" for r in config["roles"])
     footer = f"\n\n{config['footer']}\n{link}"
